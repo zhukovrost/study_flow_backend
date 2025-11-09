@@ -19,6 +19,7 @@ class Task(Base):
     description = Column(String, nullable=True)
     is_completed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)  # Дата завершения задачи
     due_date = Column(DateTime, nullable=True)
     scheduled_date = Column(DateTime, nullable=True)  # Планируемая дата выполнения
     

@@ -43,11 +43,20 @@ def create_task(db: Session, task: TaskCreate, user_id: int) -> Task:
 
 def update_task(db: Session, task_id: int, task: TaskUpdate, user_id: int) -> Optional[Task]:
     """Обновить задачу"""
+    from datetime import datetime
     db_task = get_task(db, task_id, user_id)
     if not db_task:
         return None
     
     update_data = task.dict(exclude_unset=True)
+    
+    # Если задача помечается как выполненная, устанавливаем completed_at
+    if update_data.get('is_completed') is True and not db_task.completed_at:
+        update_data['completed_at'] = datetime.utcnow()
+    # Если задача помечается как невыполненная, сбрасываем completed_at
+    elif update_data.get('is_completed') is False:
+        update_data['completed_at'] = None
+    
     for key, value in update_data.items():
         setattr(db_task, key, value)
     
@@ -69,11 +78,14 @@ def delete_task(db: Session, task_id: int, user_id: int) -> bool:
 
 def complete_task(db: Session, task_id: int, user_id: int) -> Optional[Task]:
     """Отметить задачу как выполненную"""
+    from datetime import datetime
     db_task = get_task(db, task_id, user_id)
     if not db_task:
         return None
     
     db_task.is_completed = True
+    if not db_task.completed_at:
+        db_task.completed_at = datetime.utcnow()
     db.commit()
     db.refresh(db_task)
     return db_task
