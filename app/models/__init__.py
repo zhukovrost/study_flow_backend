@@ -1,7 +1,6 @@
 # Models module
 from .user import User
 from .task import Task
-from .category import Category
+from .list import TaskList
 
-__all__ = ["User", "Task", "Category"]
-
+__all__ = ["User", "Task", "TaskList"]

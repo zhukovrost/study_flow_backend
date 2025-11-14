@@ -55,4 +55,3 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Данные из токена"""
     username: Optional[str] = None
-

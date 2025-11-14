@@ -39,7 +39,16 @@ def create_task(
     """
     Создать новую задачу
     """
-    return crud.create_task(db=db, task=task, user_id=current_user.id)
+    try:
+        db_task = crud.create_task(db=db, task=task, user_id=current_user.id)
+    except ValueError as e:
+        if str(e) == 'invalid_parent':
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid parent_id")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not create task")
+
+    if db_task is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not create task")
+    return db_task
 
 
 @router.get("/{task_id}", response_model=Task)
@@ -67,7 +76,13 @@ def update_task(
     """
     Обновить задачу
     """
-    db_task = crud.update_task(db=db, task_id=task_id, task=task, user_id=current_user.id)
+    try:
+        db_task = crud.update_task(db=db, task_id=task_id, task=task, user_id=current_user.id)
+    except ValueError as e:
+        if str(e) == 'invalid_parent':
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid parent_id")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not update task")
+
     if db_task is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     return db_task
@@ -100,8 +115,3 @@ def complete_task(
     if db_task is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     return db_task
-
-
-
-
-

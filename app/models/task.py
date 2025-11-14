@@ -26,15 +26,14 @@ class Task(Base):
     # Связь с пользователем
     owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", backref="tasks")
-    
-    # Связь с категорией
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
-    category = relationship("Category", backref="tasks")
-    
+
+    # Self-referential parent/children for subtasks
+    parent_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True)
+    parent = relationship("Task", remote_side=[id], backref="subtasks")
+
     # Дополнительные поля для StudyFlow
     priority = Column(Integer, default=1)  # 1 - низкая, 2 - средняя, 3 - высокая
 
-
-
-
-
+    # Only root tasks can belong to a TaskList
+    task_list_id = Column(Integer, ForeignKey("task_lists.id", ondelete="SET NULL"), nullable=True)
+    task_list = relationship("TaskList", backref="tasks")

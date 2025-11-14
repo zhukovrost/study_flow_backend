@@ -17,13 +17,16 @@ from .task import (
     delete_task,
     complete_task
 )
-from .category import (
-    get_category,
-    get_categories,
-    get_category_by_name,
-    create_category,
-    update_category,
-    delete_category
+from .list import (
+    get_list,
+    get_lists,
+    get_list_by_name,
+    create_list,
+    update_list,
+    delete_list,
+    get_tasks_in_list,
+    add_task_to_list,
+    remove_task_from_list
 )
 
 __all__ = [
@@ -39,10 +42,13 @@ __all__ = [
     "update_task",
     "delete_task",
     "complete_task",
-    "get_category",
-    "get_categories",
-    "get_category_by_name",
-    "create_category",
-    "update_category",
-    "delete_category",
+    "get_list",
+    "get_lists",
+    "get_list_by_name",
+    "create_list",
+    "update_list",
+    "delete_list",
+    "get_tasks_in_list",
+    "add_task_to_list",
+    "remove_task_from_list"
 ]

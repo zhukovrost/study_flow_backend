@@ -1,7 +1,7 @@
 """
 Настройка базы данных SQLite
 """
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -33,6 +33,9 @@ def init_db():
     """Инициализация базы данных - создание таблиц"""
     from app.models.user import User
     from app.models.task import Task
-    from app.models.category import Category
+    from app.models.list import TaskList
+    # Удаляем устаревшую таблицу связи, если она существовала ранее
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS task_list_tasks"))
+        conn.commit()
     Base.metadata.create_all(bind=engine)
-

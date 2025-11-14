@@ -20,6 +20,12 @@ uvicorn app.main:app --reload
 
 - Swagger UI: http://localhost:8000/docs
 
+Обратите внимание на основные группы эндпоинтов:
+
+- Authentication: `/api/v1/auth/*`
+- Tasks: `/api/v1/tasks/*`
+- TaskLists: `/api/v1/tasklists/*`
+
 ## Тестирование API
 
 ### Создание пользователя
@@ -87,7 +93,18 @@ curl -X GET "http://localhost:8000/api/v1/tasks/" \
 - `DELETE /api/v1/tasks/{id}` - Удалить задачу
 - `POST /api/v1/tasks/{id}/complete` - Отметить как выполненную
 
-## Дополнительная информация
+### Подзадачи
 
-См. полный README.md для деталей.
+Чтобы создать подзадачу, укажите parent_id в теле POST /api/v1/tasks/. Parent must belong to the same user.
 
+Пример создания подзадачи:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/tasks/" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Subtask example",
+    "parent_id": 1
+  }'
+```

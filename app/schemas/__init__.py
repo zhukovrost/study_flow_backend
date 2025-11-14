@@ -1,7 +1,7 @@
 # Schemas module
 from .user import User, UserCreate, UserUpdate, UserLogin, Token
 from .task import Task, TaskCreate, TaskUpdate
-from .category import Category, CategoryCreate, CategoryUpdate
+from .list import TaskListCreate, TaskListUpdate, TaskList
 
 __all__ = [
     "User",
@@ -12,8 +12,7 @@ __all__ = [
     "Task",
     "TaskCreate",
     "TaskUpdate",
-    "Category",
-    "CategoryCreate",
-    "CategoryUpdate",
+    "TaskListCreate",
+    "TaskListUpdate",
+    "TaskList",
 ]
-
