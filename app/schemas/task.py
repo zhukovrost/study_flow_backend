@@ -13,7 +13,8 @@ class TaskBase(BaseModel):
     due_date: Optional[datetime] = None
     scheduled_date: Optional[datetime] = None
     priority: int = 1
-    category_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    task_list_id: Optional[int] = None  # Only for root tasks
 
 
 class TaskCreate(TaskBase):
@@ -29,7 +30,8 @@ class TaskUpdate(BaseModel):
     due_date: Optional[datetime] = None
     scheduled_date: Optional[datetime] = None
     priority: Optional[int] = None
-    category_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    task_list_id: Optional[int] = None  # Only for root tasks
 
 
 class TaskInDB(TaskBase):
@@ -46,8 +48,3 @@ class TaskInDB(TaskBase):
 class Task(TaskInDB):
     """Публичная схема задачи"""
     pass
-
-
-
-
-

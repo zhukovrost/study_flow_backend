@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.database.base import init_db
-from app.api import auth, tasks, categories
+from app.api import auth, tasks, list, analytics
 
 
 @asynccontextmanager
@@ -36,7 +36,8 @@ app.add_middleware(
 # Подключение роутеров
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["Tasks"])
-app.include_router(categories.router, prefix="/api/v1/categories", tags=["Categories"])
+app.include_router(list.router, prefix="/api/v1/tasklists", tags=["TaskLists"])
+app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
 
 
 @app.get("/")
