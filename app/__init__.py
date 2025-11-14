@@ -1,6 +1,0 @@
-# StudyFlow - Task Tracker Application
-
-
-
-
-
