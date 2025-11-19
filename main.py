@@ -11,4 +11,4 @@ app.include_router(achievements_router)
 
 @app.get("/")
 def root():
-    return {"message": "Main API is running with achievements integrated!"}
+    return {"message": "Main API is running. See documentation at /docs"}

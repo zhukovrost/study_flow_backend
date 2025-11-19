@@ -7,7 +7,7 @@ class AchievementBaseOut(BaseModel):
     description: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class AchievementOut(BaseModel):
     title: str
@@ -16,4 +16,4 @@ class AchievementOut(BaseModel):
     unlocked_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
