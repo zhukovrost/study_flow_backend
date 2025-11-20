@@ -19,9 +19,7 @@ def init_achievements():
             Achievement(code="goal_master", title="Настойчивость", description="Выполни 10 целей",
                         condition_type="completed_goals", condition_value=10),
             Achievement(code="streak_7", title="7 дней подряд", description="Учись 7 дней без перерыва",
-                        condition_type="streak_days", condition_value=7),
-            Achievement(code="secret", title="Собери их всех!", description="Собери всех покемонов",
-                        condition_type="", condition_value=7)
+                        condition_type="streak_days", condition_value=7)
         ]
         db.add_all(demo)
         db.commit()
