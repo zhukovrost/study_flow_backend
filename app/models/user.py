@@ -24,3 +24,4 @@ class User(Base):
     achievements = relationship("UserAchievement", back_populates="user")
     completed_goals = Column(Integer, default=0)
     streak_days = Column(Integer, default=0)
+
