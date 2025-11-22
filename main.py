@@ -6,6 +6,7 @@ from app.api.analytics import router as analytics_router
 
 app = FastAPI(title="Main App")
 
+
 @app.on_event("startup")
 def startup_event():
     init_achievements()
