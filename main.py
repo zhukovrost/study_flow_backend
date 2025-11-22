@@ -1,15 +1,11 @@
 from fastapi import FastAPI
 from app.api import tasks
-from app.api.achievements import router as achievements_router, init_achievements
+from app.api.achievements import router as achievements_router
 from app.api.auth import router as auth_router
 from app.api.analytics import router as analytics_router
 
 app = FastAPI(title="Main App")
 
-
-@app.on_event("startup")
-def startup_event():
-    init_achievements()
 
 app.include_router(achievements_router)
 app.include_router(tasks.router)
