@@ -3,7 +3,7 @@
 """
 from typing import Optional
 from sqlalchemy import Boolean, Column, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base
 
 
@@ -21,4 +21,7 @@ class User(Base):
     surname: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+    achievements = relationship("UserAchievement", back_populates="user")
+    completed_goals = Column(Integer, default=0)
+    streak_days = Column(Integer, default=0)
 
