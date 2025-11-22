@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     # Дополнительные настройки
     API_V1_STR: str = "/api/v1"
     
+    # Настройки Google AI (Gemini)
+    GOOGLE_AI_API_KEY: Optional[str] = None
+    GOOGLE_AI_MODEL: str = "gemini-pro"
+    
     class Config:
         env_file = ".env"
 

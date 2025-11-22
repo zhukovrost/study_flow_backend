@@ -34,6 +34,7 @@ def init_db():
     from app.models.user import User
     from app.models.task import Task
     from app.models.list import TaskList
+    from app.models.user_feedback import UserDailyFeedback
     # Удаляем устаревшую таблицу связи, если она существовала ранее
     with engine.connect() as conn:
         conn.execute(text("DROP TABLE IF EXISTS task_list_tasks"))

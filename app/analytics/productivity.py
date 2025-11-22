@@ -262,9 +262,19 @@ def calculate_burnout_components(
     }
 
 
-def calculate_burnout_risk_index(components: Dict[str, float]) -> Tuple[float, str]:
+def calculate_burnout_risk_index(
+    components: Dict[str, float], 
+    feedback_score: Optional[float] = None
+) -> Tuple[float, str, float]:
     """
-    Вычисление индекса риска выгорания и категории
+    Вычисление индекса риска выгорания и категории с учетом feedback пользователя
+    
+    Args:
+        components: Компоненты индекса риска
+        feedback_score: Среднее числовое значение состояний пользователя за период (1.0-4.0) или None
+    
+    Returns:
+        Tuple[индекс_риска, категория, feedback_correction]
     """
     # Веса компонентов
     R_t = (
@@ -275,6 +285,23 @@ def calculate_burnout_risk_index(components: Dict[str, float]) -> Tuple[float, s
     )
     R_t = clip(R_t, 0.0, 1.0)
     
+    # Корректировка на основе feedback пользователя
+    feedback_correction = 0.0
+    if feedback_score is not None:
+        # Нормализуем состояние (1.0-4.0) к диапазону [-0.3, +0.3]
+        # Состояния: выгорел=1.0, устал=2.0, в норме=3.0, полон сил=4.0
+        # Если состояние 2.5 (середина), коррекция = 0
+        # Если состояние 4.0 (полон сил), коррекция = -0.3 (снижаем риск)
+        # Если состояние 1.0 (выгорел), коррекция = +0.3 (увеличиваем риск)
+        feedback_normalized = (feedback_score - 2.5) / 2.5 * 0.3
+        feedback_correction = feedback_normalized
+        
+        # Применяем коррекцию: R_t_adjusted = R_t * (1 - feedback_normalized)
+        # Если feedback_normalized отрицательный (хорошее самочувствие), риск снижается
+        # Если feedback_normalized положительный (плохое самочувствие), риск увеличивается
+        R_t = R_t * (1 - feedback_normalized)
+        R_t = clip(R_t, 0.0, 1.0)
+    
     # Определение категории
     if R_t < 0.33:
         category = "низкий"
@@ -283,7 +310,7 @@ def calculate_burnout_risk_index(components: Dict[str, float]) -> Tuple[float, s
     else:
         category = "высокий"
     
-    return float(R_t), category
+    return float(R_t), category, feedback_correction
 
 
 def get_top_weekdays(weekday_means: Dict[int, float], top_n: int = 2) -> List[Tuple[int, float]]:
@@ -303,9 +330,13 @@ def get_top_weekdays(weekday_means: Dict[int, float], top_n: int = 2) -> List[Tu
     return sorted_weekdays[:top_n]
 
 
-def calculate_productivity_metrics(daily_data: List[Dict]) -> Dict:
+def calculate_productivity_metrics(daily_data: List[Dict], feedback_score: Optional[float] = None) -> Dict:
     """
     Основная функция для вычисления всех метрик продуктивности
+    
+    Args:
+        daily_data: Список словарей с данными по дням
+        feedback_score: Средняя оценка пользователя за период (1-10) или None
     """
     # Очистка данных
     cleaned_data = clean_data(daily_data)
@@ -357,8 +388,14 @@ def calculate_productivity_metrics(daily_data: List[Dict]) -> Dict:
         moving_avgs['mean_7']
     )
     
-    # 7. Индекс риска выгорания
-    risk_index, risk_category = calculate_burnout_risk_index(components)
+    # 7. Индекс риска выгорания с учетом feedback
+    risk_index, risk_category, feedback_correction = calculate_burnout_risk_index(
+        components, 
+        feedback_score=feedback_score
+    )
+    
+    # Добавляем feedback_correction в компоненты
+    components['feedback_correction'] = feedback_correction
     
     # 8. ТОП-дни недели
     top_weekdays = get_top_weekdays(weekday_means, top_n=2)
@@ -389,3 +426,44 @@ def calculate_burnout_risk(daily_data: List[Dict]) -> Dict:
     metrics = calculate_productivity_metrics(daily_data)
     return metrics.get('burnout_risk', {'index': 0.0, 'category': 'низкий', 'components': {}})
 
+
+def is_user_performing_well(metrics: Dict, days_back: int = 14) -> bool:
+    """
+    Определяет, показывает ли пользователь стабильно хорошие результаты.
+    
+    Критерии:
+    - Индекс риска выгорания < 0.2 в течение периода
+    - Минимум 7 дней активности за период
+    - Стабильность выполнения задач (небольшое стандартное отклонение)
+    
+    Args:
+        metrics: Словарь с метриками продуктивности
+        days_back: Период для анализа (по умолчанию 14 дней)
+    
+    Returns:
+        True если пользователь показывает стабильно хорошие результаты
+    """
+    burnout_risk = metrics.get('burnout_risk', {})
+    risk_index = burnout_risk.get('index', 1.0)
+    risk_category = burnout_risk.get('category', 'высокий')
+    
+    # Основной критерий: низкий риск выгорания
+    if risk_index >= 0.2 or risk_category != 'низкий':
+        return False
+    
+    # Проверка наличия достаточного количества данных
+    tasks_raw = metrics.get('tasks_raw', [])
+    if len(tasks_raw) < 7:
+        return False
+    
+    # Проверка стабильности: стандартное отклонение не должно быть слишком большим
+    if len(tasks_raw) > 0:
+        mean_tasks = sum(tasks_raw) / len(tasks_raw)
+        if mean_tasks > 0:
+            std_dev = math.sqrt(sum((x - mean_tasks) ** 2 for x in tasks_raw) / len(tasks_raw))
+            # Коэффициент вариации не должен превышать 1.5 (150%)
+            coefficient_of_variation = std_dev / mean_tasks if mean_tasks > 0 else float('inf')
+            if coefficient_of_variation > 1.5:
+                return False
+    
+    return True

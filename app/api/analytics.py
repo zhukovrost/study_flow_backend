@@ -9,13 +9,16 @@ from app.database.base import get_db
 from app.models.user import User
 from app.deps import get_current_active_user
 from app.crud import analytics as crud_analytics
-from app.analytics import calculate_productivity_metrics, get_top_weekdays
+from app.crud import user_feedback as crud_feedback
+from app.analytics import calculate_productivity_metrics, get_top_weekdays, is_user_performing_well
 from app.schemas.analytics import (
     ProductivityMetrics,
     AnalyticsDashboard,
     ProductivityRecommendation,
     BurnoutWarning,
-    TopWeekday
+    TopWeekday,
+    SupportMessage,
+    SupportRecommendations
 )
 
 router = APIRouter()
@@ -94,6 +97,8 @@ def get_productivity_metrics(
     """
     Получить метрики продуктивности
     """
+    from datetime import datetime
+    
     # Получаем данные по дням
     daily_data = crud_analytics.get_daily_tasks_data(db, user_id=current_user.id, days_back=days_back)
     
@@ -103,8 +108,16 @@ def get_productivity_metrics(
             detail="Недостаточно данных для анализа. Нужно минимум несколько дней активности."
         )
     
-    # Вычисляем метрики
-    metrics_dict = calculate_productivity_metrics(daily_data)
+    # Получаем среднюю оценку пользователя за период для корректировки индекса риска
+    feedback_score = crud_feedback.get_recent_feedback_for_risk_calculation(
+        db, 
+        user_id=current_user.id, 
+        target_date=datetime.now().date(),
+        days_back=min(days_back, 7)
+    )
+    
+    # Вычисляем метрики с учетом feedback
+    metrics_dict = calculate_productivity_metrics(daily_data, feedback_score=feedback_score)
     
     # Преобразуем в схему
     from app.schemas.analytics import BurnoutComponents, BurnoutRisk, MovingAverages, TopWeekday
@@ -196,4 +209,116 @@ def get_recommendations(
     
     # Формируем рекомендацию
     return format_recommendation(metrics.top_weekdays)
+
+
+def get_support_recommendations(metrics_dict: dict) -> list:
+    """
+    Генерирует рекомендации поддержки для успешных пользователей
+    
+    Args:
+        metrics_dict: Словарь с метриками продуктивности
+        
+    Returns:
+        Список сообщений поддержки
+    """
+    messages = []
+    burnout_risk = metrics_dict.get('burnout_risk', {})
+    risk_index = burnout_risk.get('index', 1.0)
+    moving_avgs = metrics_dict.get('moving_averages', {})
+    mean_7 = moving_avgs.get('mean_7', 0)
+    mean_28 = moving_avgs.get('mean_28', 0)
+    
+    # Мотивационные сообщения
+    if risk_index < 0.15:
+        messages.append(SupportMessage(
+            type="motivation",
+            text="Отличная работа! Вы поддерживаете стабильный и здоровый темп работы."
+        ))
+    elif risk_index < 0.2:
+        messages.append(SupportMessage(
+            type="motivation",
+            text="Хорошие результаты! Вы на правильном пути к поддержанию баланса."
+        ))
+    
+    # Советы по поддержанию баланса
+    messages.append(SupportMessage(
+        type="balance_tip",
+        text="Не забывайте о балансе - даже при хороших результатах важно регулярно отдыхать."
+    ))
+    
+    # Предложения по оптимизации
+    if mean_7 > mean_28 * 1.2:
+        messages.append(SupportMessage(
+            type="optimization",
+            text="Вы показываете рост продуктивности! Рассмотрите возможность постепенного увеличения нагрузки, но не забывайте о балансе."
+        ))
+    elif mean_7 < mean_28 * 0.8:
+        messages.append(SupportMessage(
+            type="optimization",
+            text="Ваша продуктивность немного снизилась. Это нормально - возможно, стоит немного снизить нагрузку для восстановления."
+        ))
+    
+    # Предупреждения о риске перетренированности
+    if risk_index > 0.15 and risk_index < 0.2:
+        messages.append(SupportMessage(
+            type="warning",
+            text="Обратите внимание: индекс риска начинает расти. Рекомендуется сделать небольшой перерыв или снизить нагрузку на несколько дней."
+        ))
+    
+    return messages
+
+
+@router.get("/support", response_model=SupportRecommendations)
+def get_support_recommendations_endpoint(
+    days_back: int = 60,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Получить рекомендации поддержки для успешных пользователей
+    
+    Возвращает позитивные сообщения и советы для пользователей, которые
+    стабильно показывают хорошие результаты.
+    """
+    from datetime import datetime
+    
+    # Получаем данные по дням
+    daily_data = crud_analytics.get_daily_tasks_data(db, user_id=current_user.id, days_back=days_back)
+    
+    if not daily_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Недостаточно данных для анализа. Нужно минимум несколько дней активности."
+        )
+    
+    # Получаем среднюю оценку пользователя за период
+    feedback_score = crud_feedback.get_recent_feedback_for_risk_calculation(
+        db, 
+        user_id=current_user.id, 
+        target_date=datetime.now().date(),
+        days_back=min(days_back, 7)
+    )
+    
+    # Вычисляем метрики с учетом feedback
+    metrics_dict = calculate_productivity_metrics(daily_data, feedback_score=feedback_score)
+    
+    # Проверяем, показывает ли пользователь хорошие результаты
+    performing_well = is_user_performing_well(metrics_dict, days_back=min(days_back, 14))
+    
+    # Генерируем рекомендации
+    messages = get_support_recommendations(metrics_dict)
+    
+    # Формируем краткую сводку метрик
+    metrics_summary = {
+        "burnout_risk_index": metrics_dict['burnout_risk']['index'],
+        "burnout_risk_category": metrics_dict['burnout_risk']['category'],
+        "mean_tasks_7d": metrics_dict['moving_averages'].get('mean_7', 0),
+        "mean_tasks_28d": metrics_dict['moving_averages'].get('mean_28', 0)
+    }
+    
+    return SupportRecommendations(
+        is_performing_well=performing_well,
+        messages=messages,
+        metrics_summary=metrics_summary
+    )
 

@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List
 
-from ..database import get_db, Base, engine
-from ..models.achievements import User, Achievement, UserAchievement
-from ..schemas.achievements import AchievementOut
+from app.database.base import get_db, Base, engine
+from app.models.user import User
+from app.models.achievements import Achievement, UserAchievement
+from app.schemas.achievements import AchievementOut
 
 router = APIRouter(prefix="/achievements", tags=["Achievements"])
 
