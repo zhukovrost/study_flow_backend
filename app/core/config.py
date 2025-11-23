@@ -2,6 +2,7 @@
 Конфигурация приложения
 """
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import Optional
 
 
@@ -24,12 +25,16 @@ class Settings(BaseSettings):
     # Дополнительные настройки
     API_V1_STR: str = "/api/v1"
     
-    # Настройки Google AI (Gemini)
-    GOOGLE_AI_API_KEY: Optional[str] = None
-    GOOGLE_AI_MODEL: str = "gemini-pro"
+    # Настройки YandexGPT
+    YANDEXGPT_API_KEY: Optional[str] = None
+    YANDEXGPT_FOLDER_ID: Optional[str] = None
+    YANDEXGPT_MODEL: str = "yandexgpt-5.1"
     
-    class Config:
-        env_file = ".env"
+    # Настройки Google AI
+    GOOGLE_AI_API_KEY: Optional[str] = None
+    GOOGLE_AI_MODEL: str = "gemini-2.5-flash"
+    
+    model_config = ConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()

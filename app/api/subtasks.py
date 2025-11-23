@@ -43,7 +43,7 @@ def break_down_task(
     if breakdown_service is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Сервис разбиения задач недоступен. Проверьте настройку GOOGLE_AI_API_KEY."
+            detail="Сервис разбиения задач недоступен. Проверьте настройку YANDEXGPT_API_KEY и YANDEXGPT_FOLDER_ID."
         )
     
     try:
@@ -95,7 +95,7 @@ def break_down_existing_task(
     if breakdown_service is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Сервис разбиения задач недоступен. Проверьте настройку GOOGLE_AI_API_KEY."
+            detail="Сервис разбиения задач недоступен. Проверьте настройку YANDEXGPT_API_KEY и YANDEXGPT_FOLDER_ID."
         )
     
     try:

@@ -1,37 +1,31 @@
 """
-Сервис для работы с Google AI (Gemini) для разбиения задач на подзадачи
+Сервис для работы с YandexGPT для разбиения задач на подзадачи
 """
 import json
 import logging
+import requests
 from typing import List, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-try:
-    import google.generativeai as genai  # type: ignore
-    GOOGLE_AI_AVAILABLE = True
-except ImportError:
-    genai = None  # type: ignore
-    GOOGLE_AI_AVAILABLE = False
-    logger.warning("google-generativeai не установлен. Установите: pip install google-generativeai")
+# YandexGPT API endpoint
+YANDEXGPT_API_URL = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
 
 
 class TaskBreakdownService:
-    """Сервис для разбиения задач на подзадачи с помощью Google AI"""
+    """Сервис для разбиения задач на подзадачи с помощью YandexGPT"""
     
-    def __init__(self, api_key: str, model_name: str = "gemini-pro"):
+    def __init__(self, api_key: str, folder_id: str, model_name: str = "yandexgpt-5.1"):
         """
         Инициализация сервиса
         
         Args:
-            api_key: API ключ для Google AI
-            model_name: Название модели (по умолчанию gemini-pro)
+            api_key: API ключ для Yandex Cloud (IAM токен или API ключ)
+            folder_id: ID каталога в Yandex Cloud
+            model_name: Название модели (по умолчанию yandexgpt-5.1)
         """
-        if not GOOGLE_AI_AVAILABLE or genai is None:
-            raise ImportError("google-generativeai не установлен. Установите: pip install google-generativeai")
-        
-        genai.configure(api_key=api_key)  # type: ignore
-        self.model = genai.GenerativeModel(model_name)  # type: ignore
+        self.api_key = api_key
+        self.folder_id = folder_id
         self.model_name = model_name
         
         # Системный промпт
@@ -93,16 +87,53 @@ class TaskBreakdownService:
         if constraints:
             user_prompt += f"\nОграничения: {constraints}"
         
+        # Формируем полный промпт
+        full_prompt = f"{self.system_prompt}\n\n{user_prompt}"
+        
         response_text: str = ""
         try:
-            # Формируем полный промпт
-            full_prompt = f"{self.system_prompt}\n\n{user_prompt}"
+            # Подготавливаем запрос к YandexGPT API
+            headers = {
+                "Authorization": f"Api-Key {self.api_key}",
+                "Content-Type": "application/json"
+            }
             
-            # Отправляем запрос в Google AI
-            response = self.model.generate_content(full_prompt)  # type: ignore
+            payload = {
+                "modelUri": f"gpt://{self.folder_id}/{self.model_name}",
+                "completionOptions": {
+                    "stream": False,
+                    "temperature": 0.6,
+                    "maxTokens": 2000
+                },
+                "messages": [
+                    {
+                        "role": "user",
+                        "text": full_prompt
+                    }
+                ]
+            }
+            
+            # Отправляем запрос в YandexGPT API
+            logger.debug(f"Отправка запроса к YandexGPT: {self.model_name}")
+            response = requests.post(
+                YANDEXGPT_API_URL,
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            
+            # Проверяем статус ответа
+            response.raise_for_status()
+            response_data = response.json()
             
             # Извлекаем текст ответа
-            response_text = response.text.strip()  # type: ignore
+            if "result" in response_data and "alternatives" in response_data["result"]:
+                if len(response_data["result"]["alternatives"]) > 0:
+                    response_text = response_data["result"]["alternatives"][0]["message"]["text"].strip()
+                else:
+                    raise Exception("Пустой ответ от YandexGPT API")
+            else:
+                raise Exception(f"Неожиданная структура ответа: {response_data}")
             
             # Убираем markdown код блоки, если есть
             if response_text.startswith("```json"):
@@ -125,6 +156,16 @@ class TaskBreakdownService:
             
             return result
             
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Ошибка HTTP запроса к YandexGPT: {e}"
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    error_detail = e.response.json()
+                    error_msg += f"\nДетали: {error_detail}"
+                except:
+                    error_msg += f"\nСтатус: {e.response.status_code}, Текст: {e.response.text[:200]}"
+            logger.error(error_msg)
+            raise Exception(f"Ошибка при обращении к YandexGPT API: {e}")
         except json.JSONDecodeError as e:
             error_msg = f"Ошибка парсинга JSON: {e}"
             if response_text:
@@ -132,16 +173,20 @@ class TaskBreakdownService:
             logger.error(error_msg)
             raise ValueError(f"Не удалось разобрать ответ от AI как JSON: {e}")
         except Exception as e:
-            logger.error(f"Ошибка при обращении к Google AI: {e}")
+            logger.error(f"Ошибка при обращении к YandexGPT: {e}")
             raise Exception(f"Ошибка при обращении к AI сервису: {e}")
 
 
-def create_task_breakdown_service(api_key: Optional[str] = None) -> Optional[TaskBreakdownService]:
+def create_task_breakdown_service(
+    api_key: Optional[str] = None,
+    folder_id: Optional[str] = None
+) -> Optional[TaskBreakdownService]:
     """
     Создать экземпляр сервиса разбиения задач
     
     Args:
         api_key: API ключ (если не указан, берется из настроек)
+        folder_id: ID каталога (если не указан, берется из настроек)
     
     Returns:
         Экземпляр сервиса или None, если API ключ не настроен
@@ -150,13 +195,19 @@ def create_task_breakdown_service(api_key: Optional[str] = None) -> Optional[Tas
     
     if api_key is None:
         # Пытаемся получить из настроек
-        api_key = getattr(settings, 'GOOGLE_AI_API_KEY', None)
+        api_key = getattr(settings, 'YANDEXGPT_API_KEY', None)
+    
+    if folder_id is None:
+        folder_id = getattr(settings, 'YANDEXGPT_FOLDER_ID', None)
     
     if not api_key:
-        logger.warning("Google AI API ключ не настроен. Функция разбиения задач недоступна.")
+        logger.warning("YandexGPT API ключ не настроен. Функция разбиения задач недоступна.")
         return None
     
-    model_name = getattr(settings, 'GOOGLE_AI_MODEL', 'gemini-pro')
+    if not folder_id:
+        logger.warning("YandexGPT Folder ID не настроен. Функция разбиения задач недоступна.")
+        return None
     
-    return TaskBreakdownService(api_key=api_key, model_name=model_name)
-
+    model_name = getattr(settings, 'YANDEXGPT_MODEL', 'yandexgpt-5.1')
+    
+    return TaskBreakdownService(api_key=api_key, folder_id=folder_id, model_name=model_name)

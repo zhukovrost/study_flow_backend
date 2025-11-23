@@ -35,3 +35,4 @@ class CreateSubtasksRequest(BaseModel):
     parent_task_id: int = Field(..., description="ID родительской задачи")
     subtasks: List[SubtaskBreakdown] = Field(..., description="Список подзадач для создания")
 
+
