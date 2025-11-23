@@ -2,7 +2,7 @@
 Функции для вычисления метрик продуктивности и риска выгорания
 """
 from typing import List, Dict, Tuple, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from collections import defaultdict
 import math
 import numpy as np
