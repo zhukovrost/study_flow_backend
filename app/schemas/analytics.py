@@ -24,6 +24,7 @@ class BurnoutComponents(BaseModel):
     momentum: float
     zeros_rate: float
     streak_strain: float
+    feedback_correction: float = 0.0  # Коррекция на основе feedback пользователя
 
 
 class BurnoutRisk(BaseModel):
@@ -68,6 +69,19 @@ class BurnoutWarning(BaseModel):
     category: str
     message: str
     suggestions: List[str]
+
+
+class SupportMessage(BaseModel):
+    """Сообщение поддержки для успешных пользователей"""
+    type: str  # "motivation", "balance_tip", "optimization", "warning"
+    text: str
+
+
+class SupportRecommendations(BaseModel):
+    """Рекомендации поддержки для успешных пользователей"""
+    is_performing_well: bool
+    messages: List[SupportMessage]
+    metrics_summary: Optional[Dict] = None
 
 
 class AnalyticsDashboard(BaseModel):
