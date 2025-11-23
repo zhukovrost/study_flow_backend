@@ -13,18 +13,20 @@ router = APIRouter()
 def init_achievements():
     Base.metadata.create_all(bind=engine)
     db: Session = next(get_db())
-    if not db.query(Achievement).first():
-        demo = [
-            Achievement(code="first_goal", title="Первая цель!", description="Выполни первую учебную цель",
-                        condition_type="completed_goals", condition_value=1),
-            Achievement(code="goal_master", title="Настойчивость", description="Выполни 10 целей",
-                        condition_type="completed_goals", condition_value=10),
-            Achievement(code="streak_7", title="7 дней подряд", description="Учись 7 дней без перерыва",
-                        condition_type="streak_days", condition_value=7)
-        ]
-        db.add_all(demo)
-        db.commit()
-
+    try:
+        if not db.query(Achievement).first():
+            demo = [
+                Achievement(code="first_goal", title="Первая цель!", description="Выполни первую учебную цель",
+                            condition_type="completed_goals", condition_value=1),
+                Achievement(code="goal_master", title="Настойчивость", description="Выполни 10 целей",
+                            condition_type="completed_goals", condition_value=10),
+                Achievement(code="streak_7", title="7 дней подряд", description="Учись 7 дней без перерыва",
+                            condition_type="streak_days", condition_value=7)
+            ]
+            db.add_all(demo)
+            db.commit()
+    finally:
+        db.close()
 
 def check_achievements(user: User, db: Session) -> None:
     for ach in db.query(Achievement).all():
@@ -44,6 +46,7 @@ def check_achievements(user: User, db: Session) -> None:
 @router.get("/", response_model=List[AchievementOut])
 def get_all_achievements(db: Session = Depends(get_db)):
     return db.query(Achievement).all()
+
 
 @router.get("/users/{user_id}", response_model=List[AchievementOut])
 def get_user_achievements(user_id: int, db: Session = Depends(get_db)):
