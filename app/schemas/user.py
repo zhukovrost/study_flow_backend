@@ -28,9 +28,17 @@ class UserUpdate(BaseModel):
 
 
 class UserInDB(UserBase):
-    """Схема пользователя в БД"""
     id: int
-    
+
+    class Config:
+        from_attributes = True
+
+class UserPrivate(UserBase):
+    id: int
+    completed_goals: int = 0
+    streak_days: int = 0
+    login_days: int = 0
+
     class Config:
         from_attributes = True
 
