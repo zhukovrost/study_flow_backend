@@ -16,7 +16,7 @@ def on_startup():
 
 app.include_router(achievements_router, prefix="/achievements")
 app.include_router(tasks.router)
-app.include_router(auth_router)
+app.include_router(auth_router, prefix="/auth")
 app.include_router(analytics_router)
 
 @app.get("/")

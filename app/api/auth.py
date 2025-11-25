@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database.base import get_db
-from app.schemas.user import User, UserCreate, UserLogin, Token
+from app.schemas.user import User, UserCreate, UserLogin, Token, UserPrivate
 from app import crud
 from app.deps import get_current_active_user
 from app.core.security import create_access_token
 from app.core.config import settings
+from app.api.achievements import handle_user_login
 
 router = APIRouter()
 
@@ -55,17 +56,24 @@ def login(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
+    handle_user_login(user, db)
+
     # Создаем токен
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "streak_days": user.streak_days,
+        "login_days": user.login_days
+    }
 
 
-@router.get("/me", response_model=User)
+@router.get("/me", response_model=UserPrivate)
 def read_users_me(current_user: User = Depends(get_current_active_user)):
     """
     Получить информацию о текущем пользователе
