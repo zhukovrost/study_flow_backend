@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     GOOGLE_AI_API_KEY: Optional[str] = None
     GOOGLE_AI_MODEL: str = "gemini-2.5-flash"
     
+    # Настройки GigaChat
+    GIGACHAT_CLIENT_ID: Optional[str] = None
+    GIGACHAT_CLIENT_SECRET: Optional[str] = None
+    GIGACHAT_MODEL: str = "GigaChat"
+    GIGACHAT_OAUTH_URL: str = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
+    GIGACHAT_API_URL: str = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
+    
     model_config = ConfigDict(env_file=".env", extra="ignore")
 
 

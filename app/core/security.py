@@ -9,11 +9,12 @@ from passlib.context import CryptContext
 from app.core.config import settings
 
 # Контекст для хеширования паролей
-# Используем bcrypt с явной настройкой для избежания проблем с инициализацией
+# Используем pbkdf2_sha256 вместо bcrypt для избежания проблем с ограничением в 72 байта
+# pbkdf2_sha256 не имеет ограничений по длине пароля и является безопасным алгоритмом
 pwd_context = CryptContext(
-    schemes=["bcrypt"],
+    schemes=["pbkdf2_sha256"],
     deprecated="auto",
-    bcrypt__rounds=12  # Явно указываем количество раундов
+    pbkdf2_sha256__rounds=29000  # Количество итераций (рекомендуемое значение)
 )
 
 
