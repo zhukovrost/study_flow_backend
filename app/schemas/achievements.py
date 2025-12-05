@@ -14,6 +14,7 @@ class AchievementOut(BaseModel):
     description: str
     unlocked: Optional[bool] = False
     unlocked_at: Optional[datetime] = None
+    image_url: Optional[str] = None
 
     class Config:
         from_attributes = True

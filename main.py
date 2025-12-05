@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from app.api import tasks
 from app.api.achievements import router as achievements_router
 from app.api.auth import router as auth_router
@@ -8,6 +9,8 @@ from app.database.base import Base
 from app.api import achievements
 
 app = FastAPI(title="Main App")
+
+app.mount("/static", StaticFiles(directory="app/static"))
 
 @app.on_event("startup")
 def on_startup():

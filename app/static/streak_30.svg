@@ -1,0 +1,20 @@
+<svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="88" y="109" width="624" height="624" fill="#989797"/>
+<path d="M88 608.414V220L711 220.733V733H244.298C137.447 713.529 97.6561 689.782 88 608.414Z" fill="#C9C9C9" stroke="#C9C9C9"/>
+<rect x="88" y="109" width="624" height="111" fill="#BE0000"/>
+<path d="M88 220H712V733H400H244C244 733 204.909 718.343 194.679 702.953C184.45 687.563 188.834 661.913 194.679 631.133C194.679 631.133 144.993 639.927 127.457 634.797C109.92 629.667 88.0002 627.469 88 604.75C87.9999 582.031 88 476.5 88 476.5V220Z" fill="#E6E6E6"/>
+<ellipse cx="192" cy="165.5" rx="31" ry="30.5" fill="black"/>
+<circle cx="414.5" cy="165.5" r="30.5" fill="black"/>
+<circle cx="636.5" cy="165.5" r="30.5" fill="black"/>
+<rect x="172" y="66" width="39" height="105" rx="10" fill="#D9D9D9"/>
+<rect x="395" y="66" width="38" height="105" rx="10" fill="#D9D9D9"/>
+<rect x="617" y="66" width="38" height="105" rx="10" fill="#D9D9D9"/>
+<rect x="181" y="343" width="219" height="46" fill="#BE0000"/>
+<rect x="400" y="343" width="228" height="46" transform="rotate(90 400 343)" fill="#BE0000"/>
+<rect x="181" y="434" width="219" height="46" fill="#BE0000"/>
+<rect x="181" y="525" width="219" height="46" fill="#BE0000"/>
+<rect x="433" y="343" width="219" height="46" fill="#BE0000"/>
+<rect x="652" y="343" width="228" height="46" transform="rotate(90 652 343)" fill="#BE0000"/>
+<rect x="479" y="343" width="228" height="46" transform="rotate(90 479 343)" fill="#BE0000"/>
+<rect x="433" y="525" width="219" height="46" fill="#BE0000"/>
+</svg>

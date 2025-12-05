@@ -21,25 +21,25 @@ def init_achievements():
         if not db.query(Achievement).first():
             demo = [
                 Achievement(code="welcome", title="Добро пожаловать!", description="Зайди в приложение",
-                            condition_type="login_days", condition_value=1),
+                            condition_type="login_days", condition_value=1, image_url="/static/welcome.svg"),
                 Achievement(code="first_goal", title="Первая цель!", description="Выполни первую учебную цель",
-                            condition_type="completed_goals", condition_value=1),
+                            condition_type="completed_goals", condition_value=1, image_url="/static/goal_1.svg"),
                 Achievement(code="goals_3", title="Первые шаги", description="Выполни 3 цели",
-                            condition_type="completed_goals", condition_value=3),
+                            condition_type="completed_goals", condition_value=3, image_url="/static/goals_3.svg"),
                 Achievement(code="goal_master", title="Настойчивость", description="Выполни 10 целей",
-                            condition_type="completed_goals", condition_value=10),
+                            condition_type="completed_goals", condition_value=10, image_url="/static/goals_10.svg"),
                 Achievement(code="streak_3", title="3 дня подряд", description="Учись 3 дня подряд",
-                            condition_type="streak_days", condition_value=3),
+                            condition_type="streak_days", condition_value=3, image_url="/static/streak_3.svg"),
                 Achievement(code="streak_7", title="7 дней подряд", description="Учись 7 дней без перерыва",
-                            condition_type="streak_days", condition_value=7),
+                            condition_type="streak_days", condition_value=7, image_url="/static/streak_7.svg"),
                 Achievement(code="streak_30", title="Месяц учёбы", description="Учись 30 дней подряд",
-                            condition_type="streak_days", condition_value=30),
+                            condition_type="streak_days", condition_value=30, image_url="/static/streak_30.svg"),
                 Achievement(code="goals_20", title="20 целей!", description="Серьёзный прогресс",
-                            condition_type="completed_goals", condition_value=20),
+                            condition_type="completed_goals", condition_value=20, image_url="/static/goals_20.svg"),
                 Achievement(code="goals_50", title="50 целей!", description="Отличная работа",
-                            condition_type="completed_goals", condition_value=50),
+                            condition_type="completed_goals", condition_value=50, image_url="/static/goals_50.svg"),
                 Achievement(code="consistency_15", title="Постоянство", description="Учись 15 дней в этом месяце",
-                            condition_type="month_active_days", condition_value=15)
+                            condition_type="month_active_days", condition_value=15, image_url="/static/consistency_15.svg")
             ]
             db.add_all(demo)
             db.commit()
@@ -144,6 +144,7 @@ def get_user_achievements(user_id: int, db: Session = Depends(get_db)):
             "description": ach.description,
             "unlocked": ua.unlocked,
             "unlocked_at": ua.unlocked_at,
+            "image_url": ach.image_url
         }
         result.append(AchievementOut(**data))
     return result
