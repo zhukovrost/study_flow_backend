@@ -12,6 +12,7 @@ class Achievement(Base):
     condition_type = Column(String)
     condition_value = Column(Integer)
     users = relationship("UserAchievement", back_populates="achievement")
+    image_url = Column(String, nullable=True)
 
 class UserAchievement(Base):
     __tablename__ = "user_achievements"
